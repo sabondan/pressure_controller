@@ -43,7 +43,7 @@ class controlSettings
     float valveDirect;
     float pidGains [3];
     float integratorResetTime;
-    float integralStart = 3.0;
+    float integralStart = 1.0;
     float maxPressure;
     float minPressure;
 };
