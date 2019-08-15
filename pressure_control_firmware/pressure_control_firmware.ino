@@ -1,3 +1,5 @@
+
+
 #include "analog_PressureSensor.h"
 #include "i2c_PressureSensor.h"
 #include "i2c_mux.h"
@@ -12,13 +14,13 @@
 #include "interp_lin.h"
 
 
-
 #include <EasyLCD.h>
 
 
-
 //Include the config file from the system you are using
-#include "config/config_pneumatic_teensy.h"
+//#include "config/config_pneumatic_teensy.h"
+#include "config/config_vacuum.h"
+
 
 
 
@@ -29,17 +31,22 @@ sensorSettings senseSettings[MAX_NUM_CHANNELS];
 valveSettings  valvePairSettings[MAX_NUM_CHANNELS];
 
 //Create an object to handle serial commands
+handleHIDCommands handleCommands;
+
+
+
 #ifdef COMMS_USB
-  handleHIDCommands handleCommands;
+  #include "HIDSender"
   #define VENDOR_ID               0x16C0
   #define PRODUCT_ID              0x0486
   #define RAWHID_USAGE_PAGE       0xFFAB  // recommended: 0xFF00 to 0xFFFF
   #define RAWHID_USAGE            0x0200  // recommended: 0x0100 to 0xFFFF
 
 #else
-  handleSerialCommands handleCommands;
-#endif
+  #include "serialSender.h"
 
+#endif
+commSender comm_interface;
 eepromHandler saveHandler;
 
 Button  buttons[3] { {buttonPins[0]}, { buttonPins[1] }, { buttonPins[2] } };
@@ -121,7 +128,8 @@ void setup() {
     }
   
     buttonHandler.initialize();
-    handleCommands.initialize(MAX_NUM_CHANNELS);
+    comm_interface.getCommand()
+    handleCommands.initialize(MAX_NUM_CHANNELS, COMM_TYPE);
     handleCommands.startBroadcast();
     for (int i=0; i<MAX_NUM_CHANNELS; i++){
       
@@ -336,19 +344,11 @@ void loop() {
 
 
 //PRINT DATA OUT FUNCTION
-#ifdef COMMS_USB
-  void printData(){
-  handleCommands.sendString(generateDataStr());
+void printData(){
+  comm_interface.sendString(generateDataStr());
   
 }
 
-#else
-  void printData(){
-  
-   Serial.println(generateDataStr());
-  
-}
-#endif
 
 
 String generateDataStr(){

@@ -6,9 +6,16 @@
 
 //_________________________________________________________
 //PUBLIC FUNCTIONS
-bool handleHIDCommands::go(globalSettings (&settings), controlSettings *ctrlSettings, trajectory (&traj)) {
-  bool newCommand = getCommand(); //getCommand();
+bool handleHIDCommands::go(globalSettings (&settings), controlSettings *ctrlSettings, trajectory (&traj), String command_in ) {
+  
   bool newSettings = false;
+  if (command_in == ""){
+    newCommand = false;
+  }
+  else{
+    command = command_in;
+    newCommand = true;
+  }
   if (newCommand) {
     newSettings = processCommand(settings, ctrlSettings, traj);
     command = "";
@@ -25,7 +32,11 @@ void handleHIDCommands::stopBroadcast() {
 }
 
 
-void handleHIDCommands::initialize(int num) {
+void handleHIDCommands::initialize(int num, int comm_type_in) {
+
+  comm_type = comm_type_in;
+  
+
   numSensors = num;
   // reserve 200 bytes for the inputString:
   command.reserve(200);
@@ -35,9 +46,32 @@ void handleHIDCommands::initialize(int num) {
 //_________________________________________________________
 //PRIVATE FUNCTIONS
 
-//METHOD DEPRICATED
-bool handleHIDCommands::getCommand() {
 
+bool handleHIDCommands::getCommand() {
+  #ifdef RawHID
+    return getCommandHID();
+
+  #else
+    return getCommandSerial();
+
+  #endif
+}
+
+
+
+void handleHIDCommands::sendString(String bc_string) {
+  #ifdef RawHID
+    sendStringHID(bc_string);
+  #else
+    sendStringSerial(bc_string);
+  #endif
+}
+
+
+
+#ifdef RawHID
+
+bool handleHIDCommands::getCommandHID() {
   int n = RawHID.recv(in_buffer, 1); // 0 timeout = do not wait
   if (n > 0) {
 
@@ -58,7 +92,7 @@ bool handleHIDCommands::getCommand() {
 
 
 
-void handleHIDCommands::sendString(String bc_string){
+void handleHIDCommands::sendStringHID(String bc_string){
   // Reset the buffer with zeros
   for (int i=0; i<64; i++) {
     out_buffer[i] = 0;
@@ -68,7 +102,31 @@ void handleHIDCommands::sendString(String bc_string){
 
 }
 
+#endif
 
+
+
+bool handleHIDCommands::getCommandSerial() {
+  //unsigned long start_time = micros();
+  while (Serial.available()) {
+    // get the new byte:
+    char inChar = (char)Serial.read();
+    // Add new byte to the inputString:
+    command += inChar;
+    // If the incoming character is a newline, set a flag so we can process it
+    if (inChar == '\n') {
+      command.toUpperCase();
+      return true;
+    }
+  }
+  return false;
+}
+
+
+void handleHIDCommands::sendStringSerial(String bc_string){
+  Serial.println("using serial");
+  Serial.println(bc_string);
+}
 
 
 
