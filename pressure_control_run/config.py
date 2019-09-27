@@ -135,7 +135,7 @@ class configSender:
     
     def readStuff(self):
         while self.s.in_waiting:  # Or: while ser.inWaiting():
-            print self.s.readline().strip()
+            print(self.s.readline().strip())
     
 
 

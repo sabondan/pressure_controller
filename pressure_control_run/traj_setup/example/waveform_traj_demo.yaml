@@ -10,7 +10,7 @@ config:
     num_cycles: 2 # Number
 
     channels: [1,1,0,0]
-    waveform_type: 'triangle'
+    waveform_type: 'sin'
     waveform_freq: 0.25   #Hz
     waveform_max:  [20, 0, 15, 5  ]   #psi
     waveform_min:  [0,  20,  0, 15]   #psi
